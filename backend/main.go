@@ -1,20 +1,20 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	"github.com/XPaul6/monitora/controllers"
 	"github.com/XPaul6/monitora/database"
-	// . "github.com/XPaul6/monitora/models"
 )
 
 func init() {
 
 }
 func main() {
+	// gin.SetMode(gin.ReleaseMode)
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Cannot load .env file, using default vars")
@@ -29,13 +29,12 @@ func main() {
 		log.Fatalln("Cannot migrate to database")
 	}
 
-	fmt.Println(db.Migrator().HasTable("Users"))
-
 	router := gin.Default()
 
 	router.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"status": "ok"})
 	})
+	router.GET("/users", controllers.GetAllUsers(db))
 
 	router.Run("localhost:8080")
 }
