@@ -1,16 +1,14 @@
 package dbutil
 
 import (
-	"fmt"
+	"os"
 
-	. "github.com/XPaul6/monitora/models"
+	// . "github.com/XPaul6/monitora/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func CreateDBConnection(cfg DBConfig) (*gorm.DB, error) {
-	var dsn string = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s",
-		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port,
-	)
+func CreateDBConnection() (*gorm.DB, error) {
+	var dsn string = os.Getenv("DB_CONFIG")
 	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }
