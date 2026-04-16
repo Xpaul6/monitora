@@ -19,16 +19,17 @@ func AutoMigrate(db *gorm.DB) error {
 		return err
 	}
 
-	res := db.Raw(`
+	create_ht_sql := `
 		SELECT create_hypertable(
-			'raw_metrics',
+			'raw_logs',
 			'timestamp',
 			chunk_time_interval => INTERVAL '1 day',
 			if_not_exists => true
 		);
-	`)
+	`
+	res := db.Exec(create_ht_sql)
 	if res.Error != nil {
-		return err
+		return res.Error
 	}
 
 	return nil
