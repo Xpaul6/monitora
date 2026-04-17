@@ -3,7 +3,6 @@ package dbutil
 import (
 	"os"
 
-	// . "github.com/XPaul6/monitora/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
