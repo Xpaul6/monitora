@@ -13,7 +13,7 @@ func Register(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody AuthRequest
 		if err := c.Bind(&reqBody); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request form"})
 			return
 		}
 
@@ -72,6 +72,10 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"token": token})
+		resBody := LoginResponse{
+			ID: user.ID,
+			Token: token,
+		}
+		c.JSON(http.StatusOK, resBody)
 	}
 }

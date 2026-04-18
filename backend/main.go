@@ -36,13 +36,19 @@ func main() {
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-	router.GET("/users", controllers.GetAllUsers(db))
 
 	auth := router.Group("/auth")
 	{
 		auth.POST("/register", controllers.Register(db))
 		auth.POST("/login", controllers.Login(db))
 		auth.GET("/check", authutils.WithAuth(db), func(c *gin.Context) { c.JSON(200, gin.H{"status": "authorized"}) })
+	}
+
+	user := router.Group("/user")
+	{
+		user.GET("/servers", authutils.WithAuth(db), controllers.GetAllServers(db))
+		user.POST("/add-server", authutils.WithAuth(db), controllers.AddServer(db))
+		user.DELETE("/delete-server", authutils.WithAuth(db), controllers.DeleteServer(db))
 	}
 
 	router.Run(":8080")
