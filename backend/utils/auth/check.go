@@ -43,7 +43,12 @@ func WithAuth(db *gorm.DB) gin.HandlerFunc {
 			}
 
 			var user User
-			db.Where("email = ?", claims["email"]).First(&user)
+			result := db.Where("email = ?", claims["email"]).Find(&user)
+			if result.RowsAffected != 1 {
+				c.JSON(http.StatusUnauthorized, gin.H{"error":"Invalid email or password"})
+				c.Abort()
+				return
+			}
 			c.Set("user", user)
 			c.Next()
 		} else {

@@ -49,20 +49,20 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody AuthRequest
 		if err := c.Bind(&reqBody); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request form"})
 			return
 		}
 
 		var user User
-		result := db.Where("email = ?", reqBody.Email).First(&user)
-		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
+		result := db.Where("email = ?", reqBody.Email).Find(&user)
+		if result.RowsAffected != 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email or password"})
 			return
 		}
 
 		isValid := authutils.VerificatePassword(user.PasswordHash, reqBody.Password)
 		if !isValid {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid password"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email or password"})
 			return
 		}
 

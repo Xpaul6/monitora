@@ -33,8 +33,8 @@ func main() {
 	// Router setup
 	router := gin.Default()
 
-	router.GET("/ping", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{"status": "ok"})
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
 	})
 	router.GET("/users", controllers.GetAllUsers(db))
 
