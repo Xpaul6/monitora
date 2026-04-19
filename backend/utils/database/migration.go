@@ -32,5 +32,11 @@ func AutoMigrate(db *gorm.DB) error {
 		return res.Error
 	}
 
+	var count int64
+	db.Model(&MetricType{}).Count(&count)
+	if count == 0 {
+		db.Create(&DefaultTypes)
+	}
+
 	return nil
 }

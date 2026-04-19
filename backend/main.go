@@ -9,6 +9,7 @@ import (
 	"github.com/XPaul6/monitora/controllers"
 	authutils "github.com/XPaul6/monitora/utils/auth"
 	dbutil "github.com/XPaul6/monitora/utils/database"
+	fetchutil "github.com/XPaul6/monitora/utils/fetch"
 )
 
 func init() {
@@ -29,6 +30,9 @@ func main() {
 	if err != nil {
 		log.Fatalln("Cannot migrate to database")
 	}
+
+	// Information gathering
+	go fetchutil.RunFetchUtil(db)
 
 	// Router setup
 	router := gin.Default()
