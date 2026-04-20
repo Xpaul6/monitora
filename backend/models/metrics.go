@@ -13,17 +13,6 @@ type MetricType struct {
 	RawLogs []RawLog `gorm:"foreignKey:MetricTypeID"`
 	Limits  []Limit  `gorm:"foreignKey:MetricTypeID"`
 }
-// (cpu_load,%,"Cpu time occupancy percentage")
-// (cpu_temperature,celsius,"CPU package temperature")
-// (mem_load,%,"RAM load percentage")
-// (mem_total,bytes,"Total RAM avaliable")
-// (mem_used,bytes,"Used RAM")
-// (disk_mountpoint,string,"Disk device mount point")
-// (disk_total,bytes,"Total disk device capacity")
-// (disk_used,bytes,"Amount of used disk space")
-// (net_name,string,"Network device name")
-// (net_rbps,bps,"Recieved bytes per second")
-// (net_sbps,bps,"Sent bytes per second")
 
  var DefaultTypes []MetricType
 
