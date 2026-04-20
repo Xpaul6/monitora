@@ -48,11 +48,15 @@ func fetch(db *gorm.DB) {
 				<-sem
 				wg.Done()
 			}()
-			info, err := FetchSysInfo(server.IP)
+			info, err := fetchSysInfo(server.IP)
 			if err != nil {
 				log.Printf("Failed to fetch info from %v", server.IP)
+				server.Status = "Offline"
+				db.Save(&server)
 				return
 			}
+			server.Status = "Online"
+			db.Save(&server)
 			results <- pair{server.ID, info}
 		}(server)
 	}
@@ -65,7 +69,7 @@ func fetch(db *gorm.DB) {
 	}
 }
 
-func FetchSysInfo(ip string) (SysInfo, error) {
+func fetchSysInfo(ip string) (SysInfo, error) {
 	res, err := http.Get(fmt.Sprintf("http://%v/sysinfo", ip))
 	if err != nil {
 		return SysInfo{}, err
