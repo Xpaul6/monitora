@@ -55,5 +55,10 @@ func main() {
 		user.DELETE("/delete-server", authutils.WithAuth(db), controllers.DeleteServer(db))
 	}
 
+	stats := router.Group("/stats")
+	{
+		stats.GET("/by-period", authutils.WithAuth(db), controllers.GetStatsByPeriod(db))
+	}
+
 	router.Run(":8080")
 }

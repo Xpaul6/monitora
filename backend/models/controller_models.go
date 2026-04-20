@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type AuthRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -22,4 +24,17 @@ type AddServerRequest struct {
 
 type DeleteServerRequest struct {
 	ID uint `json:"id" binding:"required"`
+}
+
+type GetStatsByPeriodRequest struct {
+	ServerID    uint      `json:"server_id" binding:"required"`
+	PeriodBegin time.Time `json:"period_begin" binding:"required"`
+	PeriodEnd   time.Time `json:"period_end" binding:"required"`
+}
+
+type GetStatsByPeriodResponse struct {
+	Component  Component  `json:"component"`
+	MetricType MetricType `json:"metric_type"`
+	Value      float64    `json:"value"`
+	TimeStamp  time.Time  `json:"timestamp"`
 }
