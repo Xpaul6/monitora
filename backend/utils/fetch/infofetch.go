@@ -70,7 +70,10 @@ func fetch(db *gorm.DB) {
 }
 
 func fetchSysInfo(ip string) (SysInfo, error) {
-	res, err := http.Get(fmt.Sprintf("http://%v/sysinfo", ip))
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	res, err := client.Get(fmt.Sprintf("http://%v/sysinfo", ip))
 	if err != nil {
 		return SysInfo{}, err
 	}
