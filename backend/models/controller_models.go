@@ -38,3 +38,13 @@ type GetStatsByPeriodResponse struct {
 	Value      float64    `json:"value"`
 	TimeStamp  time.Time  `json:"timestamp"`
 }
+
+type SetLimitRequest struct {
+	ComponentID    uint    `json:"component_id"`
+	MetricTypeID   uint    `json:"metric_type_id"`
+	ThresholdValue float64 `json:"threshold_value"`
+}
+
+type DeleteLimitRequest struct {
+	ID uint `json:"id"`
+}

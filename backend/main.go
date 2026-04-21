@@ -53,6 +53,10 @@ func main() {
 		user.GET("/servers", authutils.WithAuth(db), controllers.GetAllServers(db))
 		user.POST("/add-server", authutils.WithAuth(db), controllers.AddServer(db))
 		user.DELETE("/delete-server", authutils.WithAuth(db), controllers.DeleteServer(db))
+
+		user.GET("/limits", authutils.WithAuth(db), controllers.GetLimits(db))
+		user.POST("/set-limit", authutils.WithAuth(db), controllers.SetLimit(db))
+		user.DELETE("/delete-limit", authutils.WithAuth(db), controllers.DeleteLimit(db))
 	}
 
 	stats := router.Group("/stats")

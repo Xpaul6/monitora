@@ -8,7 +8,7 @@ type Limit struct {
 	gorm.Model
 	ComponentID    uint    `json:"component_id"`
 	MetricTypeID   uint    `json:"metric_type_id"`
-	ThresholdValue float64 `json:"threshhold_value"`
+	ThresholdValue float64 `json:"threshold_value"`
 
 	Component Component `gorm:"foreignKey:ComponentID"`
 	MetricType MetricType `gorm:"foreignKey:MetricTypeID"`
