@@ -10,14 +10,10 @@ import (
 	"time"
 
 	. "github.com/XPaul6/monitora/models"
+	limitutils "github.com/XPaul6/monitora/utils/limits"
 
 	"gorm.io/gorm"
 )
-
-type pair struct {
-	id   uint
-	info SysInfo
-}
 
 const CONCURRENCY_LIMIT = 10
 const FETCH_INTERVAL_SECONDS = 30
@@ -30,6 +26,7 @@ func RunFetchUtil(db *gorm.DB) {
 }
 
 func fetch(db *gorm.DB) {
+	// Get all servers
 	var servers []Server
 	result := db.Find(&servers)
 	if result.Error != nil {
@@ -37,8 +34,9 @@ func fetch(db *gorm.DB) {
 		return
 	}
 
+	// Start gathering metrics concurrently
 	sem := make(chan byte, CONCURRENCY_LIMIT)
-	results := make(chan pair, len(servers))
+	results := make(chan IdInfoPair, len(servers))
 	var wg sync.WaitGroup
 	for _, server := range servers {
 		sem <- 1
@@ -57,15 +55,18 @@ func fetch(db *gorm.DB) {
 			}
 			server.Status = "Online"
 			db.Save(&s)
-			results <- pair{s.ID, info}
+			results <- IdInfoPair{Id: s.ID, Info: info}
 		}(server)
 	}
 
 	wg.Wait()
 	close(results)
 
+	// Work with recieved metrics
+	cachedMetrics := getMetricsData(db)
 	for log := range results {
 		writeLogToDB(log, db)
+		limitutils.DetectLimitCross(log, cachedMetrics, db)
 	}
 }
 
@@ -92,40 +93,50 @@ func fetchSysInfo(ip string) (SysInfo, error) {
 	return info, nil
 }
 
-func writeLogToDB(log pair, db *gorm.DB) {
+func getMetricsData(db *gorm.DB) map[uint]MetricType {
+	var metricTypes []MetricType
+	db.Find(&metricTypes)
+	metricTypeMap := make(map[uint]MetricType)
+	for _, mt := range metricTypes {
+		metricTypeMap[mt.ID] = mt
+	}
+	return metricTypeMap
+}
+
+func writeLogToDB(log IdInfoPair, db *gorm.DB) {
 	// Components synchronization
 	var cpu Component
-	result := db.Where("server_id = ? and type = ?", log.id, "cpu").First(&cpu)
+	result := db.Where("server_id = ? and type = ?", log.Id, "cpu").First(&cpu)
 	if result.Error == gorm.ErrRecordNotFound {
 		db.FirstOrCreate(&cpu, &Component{
-			ServerID: log.id,
+			ServerID: log.Id,
 			Type:     "cpu",
 			Address:  "cpu",
 		})
 	}
 
 	var mem Component
-	result = db.Where("server_id = ? and type = ?", log.id, "mem").First(&mem)
+	result = db.Where("server_id = ? and type = ?", log.Id, "mem").First(&mem)
 	if result.Error == gorm.ErrRecordNotFound {
 		db.FirstOrCreate(&mem, &Component{
-			ServerID: log.id,
+			ServerID: log.Id,
 			Type:     "mem",
 			Address:  "mem",
 		})
 	}
 
 	var disks []Component
-	result = db.Where("server_id = ? and type = ?", log.id, "disk").Find(&disks)
+	result = db.Where("server_id = ? and type = ?", log.Id, "disk").Find(&disks)
 	existingDisks := make(map[string]bool)
 	for _, disk := range disks {
 		existingDisks[disk.Address] = true
 	}
-	if (len(disks)) != len(log.info.Disks) {
+	if (len(disks)) != len(log.Info.Disks) {
 		var newDisks []Component
-		for _, v := range log.info.Disks {
+		for _, v := range log.Info.Disks {
 			if !existingDisks[v.MountPoint] {
 				newDisks = append(newDisks, Component{
-					ServerID: log.id,
+					ServerID: log.Id,
 					Type:     "disk",
 					Address:  v.MountPoint,
 				})
@@ -136,17 +147,17 @@ func writeLogToDB(log pair, db *gorm.DB) {
 	}
 
 	var nets []Component
-	result = db.Where("server_id = ? and type = ?", log.id, "net").Find(&nets)
+	result = db.Where("server_id = ? and type = ?", log.Id, "net").Find(&nets)
 	existingNets := make(map[string]bool)
 	for _, net := range nets {
 		existingNets[net.Address] = true
 	}
-	if (len(nets)) != len(log.info.Net) {
+	if (len(nets)) != len(log.Info.Net) {
 		var newNets []Component
-		for _, v := range log.info.Net {
+		for _, v := range log.Info.Net {
 			if !existingNets[v.Name] {
 				newNets = append(newNets, Component{
-					ServerID: log.id,
+					ServerID: log.Id,
 					Type:     "net",
 					Address:  v.Name,
 				})
@@ -170,35 +181,35 @@ func writeLogToDB(log pair, db *gorm.DB) {
 	logs = append(logs, RawLog{
 		ComponentID:  cpu.ID,
 		MetricTypeID: typeMap["cpu_load"].ID,
-		Value:        log.info.CPU.LoadPercentage,
+		Value:        log.Info.CPU.LoadPercentage,
 		Timestamp:    time.Now(),
 	})
 
 	logs = append(logs, RawLog{
 		ComponentID:  cpu.ID,
 		MetricTypeID: typeMap["cpu_temperature"].ID,
-		Value:        log.info.CPU.Temperature,
+		Value:        log.Info.CPU.Temperature,
 		Timestamp:    time.Now(),
 	})
 
 	logs = append(logs, RawLog{
 		ComponentID:  mem.ID,
 		MetricTypeID: typeMap["mem_load"].ID,
-		Value:        log.info.Mem.LoadPercentage,
+		Value:        log.Info.Mem.LoadPercentage,
 		Timestamp:    time.Now(),
 	})
 
 	logs = append(logs, RawLog{
 		ComponentID:  mem.ID,
 		MetricTypeID: typeMap["mem_total"].ID,
-		Value:        float64(log.info.Mem.Total),
+		Value:        float64(log.Info.Mem.Total),
 		Timestamp:    time.Now(),
 	})
 
 	logs = append(logs, RawLog{
 		ComponentID:  mem.ID,
 		MetricTypeID: typeMap["mem_used"].ID,
-		Value:        float64(log.info.Mem.Used),
+		Value:        float64(log.Info.Mem.Used),
 		Timestamp:    time.Now(),
 	})
 
@@ -206,13 +217,13 @@ func writeLogToDB(log pair, db *gorm.DB) {
 		logs = append(logs, RawLog{
 			ComponentID:  disk.ID,
 			MetricTypeID: typeMap["disk_total"].ID,
-			Value:        float64(log.info.Disks[i].Total),
+			Value:        float64(log.Info.Disks[i].Total),
 			Timestamp:    time.Now(),
 		})
 		logs = append(logs, RawLog{
 			ComponentID:  disk.ID,
 			MetricTypeID: typeMap["disk_used"].ID,
-			Value:        float64(log.info.Disks[i].Used),
+			Value:        float64(log.Info.Disks[i].Used),
 			Timestamp:    time.Now(),
 		})
 	}
@@ -221,13 +232,13 @@ func writeLogToDB(log pair, db *gorm.DB) {
 		logs = append(logs, RawLog{
 			ComponentID:  net.ID,
 			MetricTypeID: typeMap["net_rbps"].ID,
-			Value:        float64(log.info.Net[i].RBpS),
+			Value:        float64(log.Info.Net[i].RBpS),
 			Timestamp:    time.Now(),
 		})
 		logs = append(logs, RawLog{
 			ComponentID:  net.ID,
 			MetricTypeID: typeMap["net_sbps"].ID,
-			Value:        float64(log.info.Net[i].SBpS),
+			Value:        float64(log.Info.Net[i].SBpS),
 			Timestamp:    time.Now(),
 		})
 	}
