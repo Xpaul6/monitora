@@ -42,13 +42,33 @@ func SetLimit(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Ownership checks
+		userVal, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
+			return
+		}
+		user := userVal.(User)
+		var component Component
+		if err := db.First(&component, reqBody.ComponentID); err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+			return
+		}
+		var server Server
+		if err := db.First(&server, component.ServerID); err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+			return
+		}
+		if server.UserID != user.ID {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
+			return
+		}
+
 		newLimit := Limit{
 			ComponentID: reqBody.ComponentID,
 			MetricTypeID: reqBody.MetricTypeID,
 			ThresholdValue: reqBody.ThresholdValue,
 		}
-
-		// TODO: potentially check server owner and/or value limits
 
 		result := db.Create(&newLimit)
 		if result.Error != nil {
@@ -68,13 +88,13 @@ func DeleteLimit(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Ownership checks
 		userVal, exists := c.Get("user")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
 			return
 		}
 		user := userVal.(User)
-
 		var limit Limit
 		if err := db.First(&limit, reqBody.ID); err != nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
@@ -90,7 +110,6 @@ func DeleteLimit(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
 			return
 		}
-
 		if server.UserID != user.ID {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
 			return
