@@ -41,13 +41,13 @@ func AddServer(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Repeating ip check
 		userVal, exists := c.Get("user")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
 			return
 		}
 		user := userVal.(User)
-
 		var num int64
 		db.Model(&Server{}).Where("ip = ? and user_id = ?", reqBody.IP, user.ID).Count(&num)
 		if num > 0 {
@@ -78,20 +78,19 @@ func DeleteServer(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Ownership check
 		userVal, exists := c.Get("user")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
 			return
 		}
 		user := userVal.(User)
-
 		var server Server
 		result := db.First(&server, reqBody.ID)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
 			return
 		}
-
 		if server.UserID != user.ID {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
 			return
@@ -104,5 +103,42 @@ func DeleteServer(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"status": "success"})
+	}
+}
+
+func GetServerComponents(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var reqBody GetServerComponentsRequest
+		if err := c.ShouldBindJSON(&reqBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+			return
+		}
+
+		// Ownership check
+		userVal, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
+			return
+		}
+		user := userVal.(User)
+		var server Server
+		result := db.First(&server, reqBody.ID)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+			return
+		}
+		if server.UserID != user.ID {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
+			return
+		}
+
+		var components []Component
+		result = db.Where("server_id = ?", reqBody.ID).Find(&components)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+			return
+		}
+
+		c.JSON(http.StatusOK, components)
 	}
 }
