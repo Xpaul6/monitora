@@ -48,12 +48,12 @@ func fetch(db *gorm.DB) {
 			}()
 			info, err := fetchSysInfo(s.IP)
 			if err != nil {
-				log.Printf("Failed to fetch info from %v", s.IP)
-				server.Status = "Offline"
+				log.Printf("Failed to fetch info from %v: %v", s.IP, err.Error())
+				s.Status = "Offline"
 				db.Save(&s)
 				return
 			}
-			server.Status = "Online"
+			s.Status = "Online"
 			db.Save(&s)
 			results <- IdInfoPair{Id: s.ID, Info: info}
 		}(server)

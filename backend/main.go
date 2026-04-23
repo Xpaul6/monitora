@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Cannot load .env file, using default vars")
