@@ -1,0 +1,38 @@
+services:
+  backend:
+    build: ./backend/
+    ports:
+      - "${BACKEND_PORT}:8080"
+    environment:
+      - DB_CONFIG=${BACKEND_DB_CONFIG}
+      - SECRET_KEY=${BACKEND_SECRET_KEY}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend/
+    ports:
+      - "${FRONTEND_PORT}:5555"
+    # environment:
+    depends_on:
+      - backend
+
+  database:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=monitora
+    volumes:
+      - ./timescale_data:/var/lib/postgresql/data
+    ports:
+      - "1111:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  timescale_data:
