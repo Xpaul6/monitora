@@ -143,7 +143,7 @@ func writeLogToDB(log IdInfoPair, db *gorm.DB) {
 			}
 		}
 		db.Create(&newDisks)
-		db.Find(&disks)
+		db.Where("server_id = ? and type = ?", log.Id, "disk").Find(&disks)
 	}
 
 	var nets []Component
@@ -164,7 +164,7 @@ func writeLogToDB(log IdInfoPair, db *gorm.DB) {
 			}
 		}
 		db.Create(&newNets)
-		db.Find(&nets)
+		db.Where("server_id = ? and type = ?", log.Id, "net").Find(&nets)
 	}
 
 	// Mertic types caching
@@ -213,32 +213,40 @@ func writeLogToDB(log IdInfoPair, db *gorm.DB) {
 		Timestamp:    time.Now(),
 	})
 
-	for i, disk := range disks {
+	diskInfoMap := make(map[string]DiskInfo)
+	for _, d := range log.Info.Disks {
+		diskInfoMap[d.MountPoint] = d
+	}
+	for _, disk := range disks {
 		logs = append(logs, RawLog{
 			ComponentID:  disk.ID,
 			MetricTypeID: typeMap["disk_total"].ID,
-			Value:        float64(log.Info.Disks[i].Total),
+			Value:        float64(diskInfoMap[disk.Address].Total),
 			Timestamp:    time.Now(),
 		})
 		logs = append(logs, RawLog{
 			ComponentID:  disk.ID,
 			MetricTypeID: typeMap["disk_used"].ID,
-			Value:        float64(log.Info.Disks[i].Used),
+			Value:        float64(diskInfoMap[disk.Address].Used),
 			Timestamp:    time.Now(),
 		})
 	}
 
-	for i, net := range nets {
+	netInfoMap := make(map[string]NetInfo)
+	for _, n := range log.Info.Net {
+		netInfoMap[n.Name] = n
+	}
+	for _, net := range nets {
 		logs = append(logs, RawLog{
 			ComponentID:  net.ID,
 			MetricTypeID: typeMap["net_rbps"].ID,
-			Value:        float64(log.Info.Net[i].RBpS),
+			Value:        float64(netInfoMap[net.Address].RBpS),
 			Timestamp:    time.Now(),
 		})
 		logs = append(logs, RawLog{
 			ComponentID:  net.ID,
 			MetricTypeID: typeMap["net_sbps"].ID,
-			Value:        float64(log.Info.Net[i].SBpS),
+			Value:        float64(netInfoMap[net.Address].SBpS),
 			Timestamp:    time.Now(),
 		})
 	}
