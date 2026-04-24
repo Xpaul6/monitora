@@ -37,7 +37,9 @@ func GetStatsByPeriod(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var logs []RawLog
-		result = db.Where("timestamp >= ? and timestamp <= ?", reqBody.PeriodBegin, reqBody.PeriodEnd).Find(&logs)
+		result = db.Where("component_id IN (?)",
+			db.Table("components").Where("server_id = ?", reqBody.ServerID).Select("id"),
+		).Where("timestamp >= ? and timestamp <= ?", reqBody.PeriodBegin, reqBody.PeriodEnd).Find(&logs)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
 		}
