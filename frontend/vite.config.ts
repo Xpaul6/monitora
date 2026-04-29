@@ -1,16 +1,13 @@
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-
-// export default defineConfig({
-// 	plugins: [sveltekit()]
-// });
+import { defineConfig } from 'vite'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const BACKEND_PORT = 8080;
   const FRONTEND_PORT = 5555;
 
   return {
-    plugins: [sveltekit()],
+    plugins: [svelte(), tailwindcss()],
     base: '/',
     preview: {
       allowedHosts: [
