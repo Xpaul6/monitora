@@ -25,7 +25,6 @@
     let body: AuthRequest = { email: email, password: password };
     try {
       const res: LoginResponse | string = await login(body);
-      console.log(typeof res);
       if (typeof res != "string") {
         localStorage.setItem("token", res.token);
         window.location.href = "/";

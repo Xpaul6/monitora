@@ -1,3 +1,12 @@
+// General models
+export type Server = {
+  user_id: number,
+  name: string,
+  ip: string,
+  status: string
+}
+
+// API models
 export type ErrorMessage = {
   error: string
 }
@@ -10,4 +19,9 @@ export type AuthRequest = {
 export type LoginResponse = {
   id: number,
   token: string
+}
+
+export type GetAllServersResponse = {
+  count: number,
+  servers: Server[]
 }

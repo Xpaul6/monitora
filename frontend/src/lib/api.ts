@@ -1,4 +1,4 @@
-import { type AuthRequest, type ErrorMessage, type LoginResponse } from "./models";
+import { type AuthRequest, type ErrorMessage, type GetAllServersResponse, type LoginResponse } from "./models";
 
 // Service functions
 function getToken() {
@@ -36,6 +36,17 @@ export async function login(reqBody: AuthRequest): Promise<LoginResponse | strin
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(reqBody)
+  });
+  if (res.ok) return res.json();
+
+  const data: ErrorMessage = await res.json();
+  return data.error;
+}
+
+export async function getAllServers(): Promise<GetAllServersResponse | string> {
+  const res = await fetch('/api/user/servers', {
+    method: 'GET',
+    headers: getHeaders()
   });
   if (res.ok) return res.json();
 

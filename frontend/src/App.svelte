@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
 
   import AuthForm from "./components/AuthForm.svelte";
+  import AdminPanel from "./components/AdminPanel.svelte";
   import { checkAuth } from "./lib/api";
 
   let status = $state<string>("offline");
@@ -38,11 +39,12 @@
 </script>
 
 <div class="flex flex-col items-center w-full">
-  <h1>monitora</h1>
-  <h2>Backend status: {status}</h2>
-  <h2>Auth status: {isLoggedIn}</h2>
   {#if !isLoggedIn}
-    <hr />
     <AuthForm />
+  {:else}
+    <h1>monitora</h1>
+    <h2>Backend status: {status}</h2>
+    <h2>Auth status: {isLoggedIn}</h2>
+    <AdminPanel />
   {/if}
 </div>
