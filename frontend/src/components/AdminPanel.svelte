@@ -1,11 +1,12 @@
 <script lang="ts">
   import { getAllServers } from "../lib/api";
   import type { GetAllServersResponse, Server } from "../lib/models";
+    import ServerDashboard from "./ServerDashboard.svelte";
   import ServerForm from "./ServerForm.svelte";
 
   let serverList = $state<Server[]>([]);
-  let panelState = $state<'main' | 'form' | 'data'>('main');
-  let currentServer = $state<Server>({} as Server);
+  let panelState = $state<'main' | 'form' | 'dashboard'>('main');
+  let currentServer = $state<Server | null>(null);
 
   async function handleGetAllServers() {
     try {
@@ -20,13 +21,19 @@
     }
   }
 
+  function setCurrentServer(s: Server) {
+    currentServer = s;
+    panelState = 'dashboard';
+  }
+
   $effect(() => {
     if (panelState == 'main') {
-      handleGetAllServers();
+      handleGetAllServers().then();
     }
   });
 </script>
 
+<!-- Main component section -->
 <main class="w-full flex flex-col items-center">
   {#if panelState == 'main'}
     <h1>Admin panel</h1>
@@ -34,7 +41,7 @@
       class="m-2 p-2 border border-gray-400 rounded-md flex flex-col items-center w-[75%]"
     >
       <h2>Servers: {serverList.length}</h2>
-      {#each serverList as s}
+      {#each serverList as s (s.ID)}
         {@render server(s)}
       {/each}
       <button
@@ -44,11 +51,14 @@
         }}>+</button
       >
     </div>
-  {:else}
+  {:else if panelState == 'form'}
     <ServerForm bind:panelState />
+  {:else if panelState == 'dashboard'}
+    <ServerDashboard server={currentServer}/>
   {/if}
 </main>
 
+<!-- Snippets -->
 {#snippet server(s: Server)}
   <div
     class="flex flex-row justify-between w-full p-1 m-1 border border-transparent
@@ -60,6 +70,6 @@
     >
       {s.status || "Waiting"}
     </div>
-    <button class="form-button">Observe</button>
+    <button class="form-button" onclick={() => setCurrentServer(s)}>Observe</button>
   </div>
 {/snippet}

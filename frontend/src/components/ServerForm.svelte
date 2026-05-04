@@ -29,7 +29,7 @@
 >
   <label for="name">Name</label>
   <input type="text" id="name" class="form-input" bind:value={name} />
-  <label for="ip">IP:port</label>
+  <label for="ip">IP:Port</label>
   <input type="text" id="ip" class="form-input" bind:value={ip} />
   <div class="flex flex-row justify-around mt-3">
     <button class="form-button" onclick={handleAddServer}>Add server</button>

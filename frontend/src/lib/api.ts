@@ -1,4 +1,4 @@
-import { type AddServerRequest, type AuthRequest, type ErrorMessage, type GetAllServersResponse, type LoginResponse } from "./models";
+import { type AddServerRequest, type AuthRequest, type Component, type ErrorMessage, type GetAllServersResponse, type GetServerComponentsRequest, type GetStatsByPeriodRequest, type GetStatsByPeriodResponse, type LoginResponse, type MetricType } from "./models";
 
 // Service functions
 function getToken() {
@@ -61,6 +61,40 @@ export async function addServer(reqBody: AddServerRequest): Promise<null | strin
     body: JSON.stringify(reqBody)
   });
   if (res.ok) return null;
+
+  const data: ErrorMessage = await res.json();
+  return data.error;
+}
+
+export async function getServerComponents(reqBody: GetServerComponentsRequest): Promise<Component[] | string> {
+  const res = await fetch('/api/user/components', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(reqBody)
+  });
+  if (res.ok) return res.json();
+
+  const data: ErrorMessage = await res.json();
+  return data.error;
+}
+
+export async function getMetricTypes(): Promise<MetricType[] | string> {
+  const res = await fetch('/api/service/metric-types', {
+    method: 'GET'
+  });
+  if (res.ok) return res.json();
+
+  const data: ErrorMessage = await res.json();
+  return data.error;
+}
+
+export async function getStatsByPeriod(reqBody: GetStatsByPeriodRequest): Promise<GetStatsByPeriodResponse[] | string> {
+  const res = await fetch('/api/stats/by-period', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(reqBody)
+  });
+  if (res.ok) return res.json();
 
   const data: ErrorMessage = await res.json();
   return data.error;
