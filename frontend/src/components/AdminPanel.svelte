@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { getAllServers } from "../lib/api";
-  import { type GetAllServersResponse, type Server } from "../lib/models";
+  import type { GetAllServersResponse, Server } from "../lib/models";
+  import ServerForm from "./ServerForm.svelte";
 
   let serverList = $state<Server[]>([]);
+  let panelState = $state<'main' | 'form' | 'data'>('main');
   let currentServer = $state<Server>({} as Server);
 
   async function handleGetAllServers() {
@@ -19,20 +20,33 @@
     }
   }
 
-  onMount(handleGetAllServers);
+  $effect(() => {
+    if (panelState == 'main') {
+      handleGetAllServers();
+    }
+  });
 </script>
 
 <main class="w-full flex flex-col items-center">
-  <h1>Admin panel</h1>
-  <div
-    class="m-2 p-2 border border-gray-400 rounded-md flex flex-col items-center w-[75%]"
-  >
-    <h2>Servers: {serverList.length}</h2>
-    {#each serverList as s}
-      {@render server(s)}
-    {/each}
-    <button class="form-button">+</button>
-  </div>
+  {#if panelState == 'main'}
+    <h1>Admin panel</h1>
+    <div
+      class="m-2 p-2 border border-gray-400 rounded-md flex flex-col items-center w-[75%]"
+    >
+      <h2>Servers: {serverList.length}</h2>
+      {#each serverList as s}
+        {@render server(s)}
+      {/each}
+      <button
+        class="form-button"
+        onclick={() => {
+          panelState = 'form';
+        }}>+</button
+      >
+    </div>
+  {:else}
+    <ServerForm bind:panelState />
+  {/if}
 </main>
 
 {#snippet server(s: Server)}

@@ -25,3 +25,8 @@ export type GetAllServersResponse = {
   count: number,
   servers: Server[]
 }
+
+export type AddServerRequest = {
+  name: string,
+  ip: string
+}
