@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { Chart, registerables } from "chart.js";
   import "chartjs-adapter-date-fns";
   Chart.register(...registerables);
@@ -21,48 +21,39 @@
   let { server = $bindable<Server>() } = $props();
   let serverComponents = $state<Component[]>([]);
   let metricTypes = $state<MetricType[]>([]);
-  let periodBegin = $state<Date>({} as Date);
-  let periodEnd = $state<Date>({} as Date);
+  let periodBegin = $state<Date>(new Date());
+  let periodEnd = $state<Date>(new Date());
   let stats = $state<GetStatsByPeriodResponse[]>([]);
-  let canvasElement = $state<any>();
-  let chartInstance = $state<any>();
-  let chartData = $derived({
-    datasets: [
-      {
-        label: stats[0].metric_type.name,
-        data: stats
-          .filter((m) => m.metric_type.name == "cpu_load")
-          .map((m) => ({
-            x: m.timestamp,
-            y: m.value,
-          })),
-        borderColor: getRandomColor(),
-        tension: 0.1,
-      },
-    ],
+  let chartInstances = $state<Chart[]>([]);
+
+  // Group stats by unit (e.g., "%", "celsius", "bytes")
+  let groupedStats = $derived.by(() => {
+    const groups: Array<{
+      unit: string;
+      unitStats: GetStatsByPeriodResponse[];
+    }> = [];
+    const unitMap: Record<string, GetStatsByPeriodResponse[]> = {};
+
+    for (const stat of stats) {
+      const unit = stat.metric_type.unit;
+      if (!unitMap[unit]) {
+        unitMap[unit] = [];
+      }
+      unitMap[unit].push(stat);
+    }
+
+    for (const [unit, unitStats] of Object.entries(unitMap)) {
+      groups.push({ unit, unitStats });
+    }
+
+    return groups;
   });
 
-  // let serverComponentMap = $derived.by<Map<number, Component>>(() => {
-  //   let ret = new Map<number, Component>();
-  //   for (let c of serverComponents) {
-  //     ret.set(c.ID, c);
-  //   }
-  //   return ret;
-  // });
-
-  // let metricTypeMap = $derived.by<Map<number, MetricType>>(() => {
-  //   let ret = new Map<number, MetricType>();
-  //   for (let m of metricTypes) {
-  //     ret.set(m.ID, m);
-  //   }
-  //   return ret;
-  // });
-
   function getRandomColor() {
-    var r = Math.floor(Math.random() * 256);
-    var g = Math.floor(Math.random() * 256);
-    var b = Math.floor(Math.random() * 256);
-    return "rgb(" + r + "," + g + "," + b + ")";
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    return `rgb(${r},${g},${b})`;
   }
 
   async function handleGetServerComponents() {
@@ -103,38 +94,94 @@
       if (typeof res != "string") {
         stats = res;
       } else {
-        alert("Unable to fetch metric types: " + res);
+        alert("Unable to fetch stats: " + res);
       }
     } catch (e) {
       alert("Network error: " + e);
     }
 
+    await tick();
     drawCharts();
   }
 
+  const BYTES_TO_GB = Math.pow(1024, 3);
+
   function drawCharts() {
-    if (canvasElement && !chartInstance) {
-      // Initialize Chart
-      chartInstance = new Chart(canvasElement, {
+    chartInstances.forEach((chart) => chart.destroy());
+    chartInstances = [];
+
+    for (const { unit, unitStats } of groupedStats) {
+      // Skip string-type metrics
+      if (unit === "string") continue;
+
+      const canvas = document.getElementById(
+        `chart-${unit}`,
+      ) as HTMLCanvasElement;
+      if (!canvas) continue;
+
+      const datasets: any[] = [];
+
+      const componentGroups: Record<string, GetStatsByPeriodResponse[]> = {};
+      for (const stat of unitStats) {
+        const componentKey = `${stat.component.type}:${stat.component.address || stat.component.type}`;
+        if (!componentGroups[componentKey]) {
+          componentGroups[componentKey] = [];
+        }
+        componentGroups[componentKey].push(stat);
+      }
+
+      for (const [componentKey, componentStats] of Object.entries(
+        componentGroups,
+      )) {
+        const component = componentStats[0].component;
+        const metricNames = [
+          ...new Set(componentStats.map((s) => s.metric_type.name)),
+        ];
+
+        for (const metricName of metricNames) {
+          const metricData = componentStats
+            .filter((s) => s.metric_type.name === metricName)
+            .map((m) => ({
+              x: new Date(m.timestamp),
+              y: unit === "bytes" ? m.value / BYTES_TO_GB : m.value,
+            }));
+
+          const label =
+            component.type === "cpu" || component.type === "mem"
+              ? `${component.type} - ${metricName}`
+              : `${component.address} - ${metricName}`;
+
+          datasets.push({
+            label,
+            data: metricData,
+            borderColor: getRandomColor(),
+            tension: 0.1,
+          });
+        }
+      }
+
+      const chart = new Chart(canvas, {
         type: "line",
-        data: chartData,
+        data: { datasets },
         options: {
           responsive: true,
           scales: {
             x: {
-              type: "time", // Sets X-axis to handle time
+              type: "time",
               time: { unit: "minute" },
               title: { display: true, text: "Time" },
             },
             y: {
               title: {
                 display: true,
-                text: stats[0]?.metric_type.unit || "Value",
+                text: unit === "bytes" ? "GB" : unit,
               },
             },
           },
         },
       });
+
+      chartInstances.push(chart);
     }
   }
 
@@ -182,8 +229,15 @@
       </div>
     </form>
   </div>
-  <div class="chart-container">
-    <canvas bind:this={canvasElement}></canvas>
+  <div class="flex flex-row flex-wrap justify-around">
+    {#each groupedStats as group (group.unit)}
+      <div
+        class="chart-container m-2 p-2 border border-gray-300 rounded-md min-w-100"
+      >
+        <h3 class="text-center">{group.unit} metrics</h3>
+        <canvas id="chart-{group.unit}"></canvas>
+      </div>
+    {/each}
   </div>
 </div>
 
