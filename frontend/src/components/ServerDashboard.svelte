@@ -130,9 +130,7 @@
         componentGroups[componentKey].push(stat);
       }
 
-      for (const [componentKey, componentStats] of Object.entries(
-        componentGroups,
-      )) {
+      for (const [_, componentStats] of Object.entries(componentGroups)) {
         const component = componentStats[0].component;
         const metricNames = [
           ...new Set(componentStats.map((s) => s.metric_type.name)),
@@ -148,7 +146,7 @@
 
           const label =
             component.type === "cpu" || component.type === "mem"
-              ? `${component.type} - ${metricName}`
+              ? `${metricName}`
               : `${component.address} - ${metricName}`;
 
           datasets.push({
@@ -229,13 +227,18 @@
       </div>
     </form>
   </div>
+  {#if stats.length == 0}
+    <p>No metrics in selected period</p>
+  {:else}
+    <p>Points: {stats.length / metricTypes.length}</p>
+  {/if}
   <div class="flex flex-row flex-wrap justify-around">
     {#each groupedStats as group (group.unit)}
       <div
         class="chart-container m-2 p-2 border border-gray-300 rounded-md min-w-100"
       >
         <h3 class="text-center">{group.unit} metrics</h3>
-        <canvas id="chart-{group.unit}"></canvas>
+        <canvas id="chart-{group.unit}" class="min-h-75"></canvas>
       </div>
     {/each}
   </div>

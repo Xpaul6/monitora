@@ -1,11 +1,11 @@
 <script lang="ts">
   import { getAllServers } from "../lib/api";
   import type { GetAllServersResponse, Server } from "../lib/models";
-    import ServerDashboard from "./ServerDashboard.svelte";
+  import ServerDashboard from "./ServerDashboard.svelte";
   import ServerForm from "./ServerForm.svelte";
 
   let serverList = $state<Server[]>([]);
-  let panelState = $state<'main' | 'form' | 'dashboard'>('main');
+  let panelState = $state<"main" | "form" | "dashboard">("main");
   let currentServer = $state<Server | null>(null);
 
   async function handleGetAllServers() {
@@ -23,11 +23,16 @@
 
   function setCurrentServer(s: Server) {
     currentServer = s;
-    panelState = 'dashboard';
+    panelState = "dashboard";
+  }
+
+  function handleLogout() {
+    localStorage.setItem("token", "");
+    window.location.href = "/";
   }
 
   $effect(() => {
-    if (panelState == 'main') {
+    if (panelState == "main") {
       handleGetAllServers().then();
     }
   });
@@ -35,7 +40,8 @@
 
 <!-- Main component section -->
 <main class="w-full flex flex-col items-center">
-  {#if panelState == 'main'}
+  {#if panelState == "main"}
+    <button class="form-button" onclick={handleLogout}>Logout</button>
     <h1>Admin panel</h1>
     <div
       class="m-2 p-2 border border-gray-400 rounded-md flex flex-col items-center w-[75%]"
@@ -47,14 +53,20 @@
       <button
         class="form-button"
         onclick={() => {
-          panelState = 'form';
+          panelState = "form";
         }}>+</button
       >
     </div>
-  {:else if panelState == 'form'}
+  {:else if panelState == "form"}
+    <button class="form-button" onclick={() => (panelState = "main")}
+      >Go back</button
+    >
     <ServerForm bind:panelState />
-  {:else if panelState == 'dashboard'}
-    <ServerDashboard server={currentServer}/>
+  {:else if panelState == "dashboard"}
+    <button class="form-button" onclick={() => (panelState = "main")}
+      >Go back</button
+    >
+    <ServerDashboard server={currentServer} />
   {/if}
 </main>
 
@@ -70,6 +82,8 @@
     >
       {s.status || "Waiting"}
     </div>
-    <button class="form-button" onclick={() => setCurrentServer(s)}>Observe</button>
+    <button class="form-button" onclick={() => setCurrentServer(s)}
+      >Observe</button
+    >
   </div>
 {/snippet}
