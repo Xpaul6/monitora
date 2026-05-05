@@ -40,11 +40,15 @@
 
 <div class="flex flex-col items-center w-full">
   <h1>monitora</h1>
-  {#if !isLoggedIn}
-    <AuthForm />
+  {#if status != 'online'}
+    <p>backend is down :(</p>
   {:else}
-    <!-- <h2>Backend status: {status}</h2>
-    <h2>Auth status: {isLoggedIn}</h2> -->
-    <AdminPanel />
+    {#if !isLoggedIn}
+      <AuthForm />
+    {:else}
+      <!-- <h2>Backend status: {status}</h2>
+      <h2>Auth status: {isLoggedIn}</h2> -->
+      <AdminPanel />
+    {/if}
   {/if}
 </div>

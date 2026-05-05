@@ -5,10 +5,13 @@
   Chart.register(...registerables);
 
   import {
+    deleteLimit,
     deleteServer,
+    getLimits,
     getMetricTypes,
     getServerComponents,
     getStatsByPeriod,
+    setLimit,
   } from "../lib/api";
   import type {
     MetricType,
@@ -18,17 +21,38 @@
     GetStatsByPeriodRequest,
     GetStatsByPeriodResponse,
     DeleteServerRequest,
+    Limit,
+    SetLimitRequest,
   } from "../lib/models";
+  import LimitForm from "./LimitForm.svelte";
 
   let { server = $bindable<Server>(), panelState = $bindable() } = $props();
   let serverComponents = $state<Component[]>([]);
+  let serverComponentMap = $derived.by<Map<number, Component>>(() => {
+    let ret = new Map<number, Component>();
+    for (let c of serverComponents) {
+      ret.set(c.ID, c);
+    }
+    return ret;
+  });
   let metricTypes = $state<MetricType[]>([]);
+  let metricTypeMap = $derived.by<Map<number, MetricType>>(() => {
+    let ret = new Map<number, MetricType>();
+    for (let m of metricTypes) {
+      ret.set(m.ID, m);
+    }
+    return ret;
+  });
+  let limits = $state<Limit[]>([]);
+  let displayLimitForm = $state<boolean>(false);
+  let newLimitComponent = $state<Component>({} as Component);
+  let newLimitMetric = $state<MetricType>({} as MetricType);
+  let newLimitValue = $state<number>(0);
   let periodBegin = $state<Date>(new Date());
   let periodEnd = $state<Date>(new Date());
   let stats = $state<GetStatsByPeriodResponse[]>([]);
   let chartInstances = $state<Chart[]>([]);
 
-  // Group stats by unit (e.g., "%", "celsius", "bytes")
   let groupedStats = $derived.by(() => {
     const groups: Array<{
       unit: string;
@@ -36,6 +60,7 @@
     }> = [];
     const unitMap: Record<string, GetStatsByPeriodResponse[]> = {};
 
+    if (stats == null) return [];
     for (const stat of stats) {
       const unit = stat.metric_type.unit;
       if (!unitMap[unit]) {
@@ -91,9 +116,60 @@
     try {
       const res = await deleteServer(body);
       if (typeof res != "string") {
-        panelState = 'main';
+        panelState = "main";
       } else {
         alert("Unable to delete server: " + res);
+      }
+    } catch (e) {
+      alert("Network error: " + e);
+    }
+  }
+
+  async function handleGetLimits() {
+    try {
+      const res = await getLimits();
+      if (typeof res != "string") {
+        limits = res;
+      } else {
+        alert("Unable to get limits: " + res);
+      }
+    } catch (e) {
+      alert("Network error: " + e);
+    }
+  }
+
+  async function handleSetLimit() {
+    if (!displayLimitForm) {
+      displayLimitForm = true;
+      return;
+    }
+
+    const body: SetLimitRequest = {
+      component_id: newLimitComponent.ID,
+      metric_type_id: newLimitMetric.ID,
+      threshold_value: newLimitValue,
+    };
+    try {
+      const res = await setLimit(body);
+      if (typeof res != "string") {
+        displayLimitForm = false;
+        handleGetLimits();
+      } else {
+        alert("Unable to set limit: " + res);
+      }
+    } catch (e) {
+      alert("Network error: " + e);
+    }
+  }
+
+  async function handleDeleteLimit(id: number) {
+    const body: DeleteServerRequest = { id: id };
+    try {
+      const res = await deleteLimit(body);
+      if (typeof res != "string") {
+        handleGetLimits();
+      } else {
+        alert("Unable to delete limit: " + res);
       }
     } catch (e) {
       alert("Network error: " + e);
@@ -202,6 +278,7 @@
 
   onMount(handleGetServerComponents);
   onMount(handleGetMetricTypes);
+  onMount(handleGetLimits);
 </script>
 
 <div class="flex flex-col items-center">
@@ -221,8 +298,33 @@
         {@render component(c)}
       {/each}
     </div>
+    <div>
+      <h2>Limits:</h2>
+      {#each limits as l (l.ID)}
+        {@render limit(l)}
+      {/each}
+    </div>
   </div>
-  <button class="form-button" onclick={handleDeleteServer}>Delete this server</button>
+  {#if displayLimitForm}
+    <LimitForm
+      bind:newLimitComponent
+      bind:newLimitMetric
+      bind:newLimitValue
+      components={serverComponents}
+      metrics={metricTypes}
+    />
+  {/if}
+  <div>
+    <button class="form-button" onclick={handleSetLimit}>Set new limit</button>
+    {#if displayLimitForm}
+      <button class="form-button" onclick={() => (displayLimitForm = false)}
+        >Close form</button
+      >
+    {/if}
+  </div>
+  <button class="form-button" onclick={handleDeleteServer}
+    >Delete this server</button
+  >
   <!-- Stats -->
   <div>
     <form
@@ -245,7 +347,7 @@
       </div>
     </form>
   </div>
-  {#if stats.length == 0}
+  {#if stats == null || stats.length == 0}
     <p>No metrics in selected period</p>
   {:else}
     <p>Points: {stats.length / metricTypes.length}</p>
@@ -269,5 +371,15 @@
     {:else}
       <p>{c.type}: {c.address}</p>
     {/if}
+  </div>
+{/snippet}
+
+{#snippet limit(l: Limit)}
+  <div class="flex flex-row justify-between">
+    <p>
+      {serverComponentMap.get(l.component_id)?.address}: {l.threshold_value}
+      {metricTypeMap.get(l.metric_type_id)?.unit}
+    </p>
+    <button class="px-2 mx-2 rounded-md hover:cursor-pointer hover:bg-red-500" onclick={() => handleDeleteLimit(l.ID)}>x</button>
   </div>
 {/snippet}

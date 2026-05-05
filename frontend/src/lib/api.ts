@@ -1,4 +1,4 @@
-import { type AddServerRequest, type AuthRequest, type Component, type DeleteServerRequest, type ErrorMessage, type GetAllServersResponse, type GetServerComponentsRequest, type GetStatsByPeriodRequest, type GetStatsByPeriodResponse, type LoginResponse, type MetricType } from "./models";
+import { type AddServerRequest, type AuthRequest, type Component, type DeleteLimitRequest, type DeleteServerRequest, type ErrorMessage, type GetAllServersResponse, type GetServerComponentsRequest, type GetStatsByPeriodRequest, type GetStatsByPeriodResponse, type Limit, type LoginResponse, type MetricType, type SetLimitRequest } from "./models";
 
 // Service functions
 function getToken() {
@@ -102,6 +102,41 @@ export async function getStatsByPeriod(reqBody: GetStatsByPeriodRequest): Promis
 
 export async function deleteServer(reqBody: DeleteServerRequest): Promise<null | string> {
   const res = await fetch('api/user/delete-server', {
+    method: 'DELETE',
+    headers: getHeaders(),
+    body: JSON.stringify(reqBody)
+  });
+  if (res.ok) return null;
+
+  const data = await res.json();
+  return data.error;
+}
+
+export async function getLimits(): Promise<Limit[] | string> {
+  const res = await fetch('api/user/limits', {
+    method: 'GET',
+    headers: getHeaders()
+  });
+  if (res.ok) return res.json();
+
+  const data = await res.json();
+  return data.error;
+}
+
+export async function setLimit(reqBody: SetLimitRequest): Promise<null | string> {
+  const res = await fetch('api/user/set-limit', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(reqBody)
+  });
+  if (res.ok) return res.json();
+
+  const data = await res.json();
+  return data.error;
+}
+
+export async function deleteLimit(reqBody: DeleteLimitRequest): Promise<null | string> {
+  const res = await fetch('api/user/delete-limit', {
     method: 'DELETE',
     headers: getHeaders(),
     body: JSON.stringify(reqBody)

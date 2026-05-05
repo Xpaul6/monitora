@@ -5,7 +5,7 @@
   import ServerForm from "./ServerForm.svelte";
 
   let serverList = $state<Server[]>([]);
-  let panelState = $state<"main" | "form" | "dashboard">("main");
+  let panelState = $state<"main" | "server_form" | "dashboard">("main");
   let currentServer = $state<Server | null>(null);
 
   async function handleGetAllServers() {
@@ -53,11 +53,11 @@
       <button
         class="form-button"
         onclick={() => {
-          panelState = "form";
+          panelState = "server_form";
         }}>+</button
       >
     </div>
-  {:else if panelState == "form"}
+  {:else if panelState == "server_form"}
     <button class="form-button" onclick={() => (panelState = "main")}
       >Go back</button
     >
@@ -76,13 +76,13 @@
     class="flex flex-row justify-between w-full p-1 m-1 border border-transparent
       hover:border hover:border-gray-500 rounded-md transition-all duration-150"
   >
-    <div class="flex items-center">{s.name}: {s.ip}</div>
+    <div class="flex items-center basis-1/3">{s.name}: {s.ip}</div>
     <div
-      class={`flex items-center ${s.status == "Online" ? "text-green-500" : "text-red-500"}`}
+      class={`flex items-center basis-1/3 justify-center ${s.status == "Online" ? "text-green-500" : "text-red-500"}`}
     >
       {s.status || "Waiting"}
     </div>
-    <button class="form-button" onclick={() => setCurrentServer(s)}
+    <button class="form-button basis-1/3" onclick={() => setCurrentServer(s)}
       >Observe</button
     >
   </div>

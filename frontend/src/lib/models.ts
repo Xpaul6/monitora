@@ -21,6 +21,13 @@ export type MetricType = {
   description: string
 }
 
+export type Limit = {
+  ID: number,
+  component_id: number,
+  metric_type_id: number,
+  threshold_value: number
+}
+
 // API models
 export type ErrorMessage = {
   error: string
@@ -65,4 +72,14 @@ export type GetStatsByPeriodResponse = {
   metric_type: MetricType,
   value: number,
   timestamp: Date
+}
+
+export type SetLimitRequest = {
+  component_id: number,
+  metric_type_id: number,
+  threshold_value: number
+}
+
+export type DeleteLimitRequest = {
+  id: number
 }
