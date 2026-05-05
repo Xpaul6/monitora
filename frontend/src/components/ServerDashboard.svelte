@@ -5,6 +5,7 @@
   Chart.register(...registerables);
 
   import {
+    deleteServer,
     getMetricTypes,
     getServerComponents,
     getStatsByPeriod,
@@ -16,9 +17,10 @@
     Server,
     GetStatsByPeriodRequest,
     GetStatsByPeriodResponse,
+    DeleteServerRequest,
   } from "../lib/models";
 
-  let { server = $bindable<Server>() } = $props();
+  let { server = $bindable<Server>(), panelState = $bindable() } = $props();
   let serverComponents = $state<Component[]>([]);
   let metricTypes = $state<MetricType[]>([]);
   let periodBegin = $state<Date>(new Date());
@@ -77,6 +79,21 @@
         metricTypes = res;
       } else {
         alert("Unable to fetch metric types: " + res);
+      }
+    } catch (e) {
+      alert("Network error: " + e);
+    }
+  }
+
+  async function handleDeleteServer() {
+    if (!confirm(`Delete server ${server.name} at ${server.ip} ?`)) return;
+    const body: DeleteServerRequest = { id: server.ID };
+    try {
+      const res = await deleteServer(body);
+      if (typeof res != "string") {
+        panelState = 'main';
+      } else {
+        alert("Unable to delete server: " + res);
       }
     } catch (e) {
       alert("Network error: " + e);
@@ -205,6 +222,7 @@
       {/each}
     </div>
   </div>
+  <button class="form-button" onclick={handleDeleteServer}>Delete this server</button>
   <!-- Stats -->
   <div>
     <form

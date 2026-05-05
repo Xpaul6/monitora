@@ -1,4 +1,4 @@
-import { type AddServerRequest, type AuthRequest, type Component, type ErrorMessage, type GetAllServersResponse, type GetServerComponentsRequest, type GetStatsByPeriodRequest, type GetStatsByPeriodResponse, type LoginResponse, type MetricType } from "./models";
+import { type AddServerRequest, type AuthRequest, type Component, type DeleteServerRequest, type ErrorMessage, type GetAllServersResponse, type GetServerComponentsRequest, type GetStatsByPeriodRequest, type GetStatsByPeriodResponse, type LoginResponse, type MetricType } from "./models";
 
 // Service functions
 function getToken() {
@@ -97,5 +97,17 @@ export async function getStatsByPeriod(reqBody: GetStatsByPeriodRequest): Promis
   if (res.ok) return res.json();
 
   const data: ErrorMessage = await res.json();
+  return data.error;
+}
+
+export async function deleteServer(reqBody: DeleteServerRequest): Promise<null | string> {
+  const res = await fetch('api/user/delete-server', {
+    method: 'DELETE',
+    headers: getHeaders(),
+    body: JSON.stringify(reqBody)
+  });
+  if (res.ok) return null;
+
+  const data = await res.json();
   return data.error;
 }

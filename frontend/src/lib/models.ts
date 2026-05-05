@@ -50,6 +50,10 @@ export type GetServerComponentsRequest = {
   id: number
 }
 
+export type DeleteServerRequest = {
+  id: number
+}
+
 export type GetStatsByPeriodRequest = {
   server_id: number,
   period_begin: string,

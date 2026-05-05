@@ -66,7 +66,7 @@
     <button class="form-button" onclick={() => (panelState = "main")}
       >Go back</button
     >
-    <ServerDashboard server={currentServer} />
+    <ServerDashboard server={currentServer} bind:panelState />
   {/if}
 </main>
 
