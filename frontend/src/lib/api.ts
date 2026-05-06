@@ -1,4 +1,4 @@
-import type { AddServerRequest, AuthRequest, Component, DeleteLimitRequest, DeleteServerRequest, ErrorMessage, GetAllServersResponse, GetServerComponentsRequest, GetStatsByPeriodRequest, GetStatsByPeriodResponse, Limit, LimitNotification, LoginResponse, MetricType, SetLimitRequest } from "./models";
+import type { AddServerRequest, AuthRequest, Component, DeleteLimitRequest, DeleteServerRequest, ErrorMessage, GetAllServersResponse, GetLimitsRequest, GetNotificationsRequest, GetServerComponentsRequest, GetStatsByPeriodRequest, GetStatsByPeriodResponse, Limit, LimitNotification, LoginResponse, MetricType, SetLimitRequest } from "./models";
 
 // Service functions
 function getToken() {
@@ -112,10 +112,11 @@ export async function deleteServer(reqBody: DeleteServerRequest): Promise<null |
   return data.error;
 }
 
-export async function getLimits(): Promise<Limit[] | string> {
+export async function getLimits(reqBody: GetLimitsRequest): Promise<Limit[] | string> {
   const res = await fetch('api/user/limits', {
-    method: 'GET',
-    headers: getHeaders()
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(reqBody)
   });
   if (res.ok) return res.json();
 
@@ -147,10 +148,11 @@ export async function deleteLimit(reqBody: DeleteLimitRequest): Promise<null | s
   return data.error;
 }
 
-export async function getNotifications(): Promise<LimitNotification[] | string> {
+export async function getNotifications(reqBody: GetNotificationsRequest): Promise<LimitNotification[] | string> {
   const res = await fetch('api/user/notifications', {
-    method: 'GET',
-    headers: getHeaders()
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(reqBody)
   });
   if (res.ok) return res.json();
 

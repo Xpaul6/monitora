@@ -90,3 +90,11 @@ export type SetLimitRequest = {
 export type DeleteLimitRequest = {
   id: number
 }
+
+export type GetLimitsRequest = {
+  id: number
+}
+
+export type GetNotificationsRequest = {
+  id: number
+}

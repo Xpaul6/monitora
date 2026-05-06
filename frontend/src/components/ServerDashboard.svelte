@@ -25,6 +25,8 @@
     Limit,
     SetLimitRequest,
     LimitNotification,
+    GetLimitsRequest,
+    GetNotificationsRequest,
   } from "../lib/models";
   import LimitForm from "./LimitForm.svelte";
 
@@ -136,8 +138,9 @@
   }
 
   async function handleGetLimits() {
+    const body: GetLimitsRequest = { id: server.ID };
     try {
-      const res = await getLimits();
+      const res = await getLimits(body);
       if (typeof res != "string") {
         limits = res;
       } else {
@@ -187,8 +190,9 @@
   }
 
   async function handleGetNotifications() {
+    const body: GetNotificationsRequest = { id: server.iD };
     try {
-      const res = await getNotifications();
+      const res = await getNotifications(body);
       if (typeof res != "string") {
         notifications = res;
       } else {

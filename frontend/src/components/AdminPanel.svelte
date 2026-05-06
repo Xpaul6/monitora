@@ -61,6 +61,7 @@
     <button class="form-button" onclick={() => (panelState = "main")}
       >Go back</button
     >
+    <h1>New server</h1>
     <ServerForm bind:panelState />
   {:else if panelState == "dashboard"}
     <button class="form-button" onclick={() => (panelState = "main")}
