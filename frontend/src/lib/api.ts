@@ -1,4 +1,4 @@
-import { type AddServerRequest, type AuthRequest, type Component, type DeleteLimitRequest, type DeleteServerRequest, type ErrorMessage, type GetAllServersResponse, type GetServerComponentsRequest, type GetStatsByPeriodRequest, type GetStatsByPeriodResponse, type Limit, type LoginResponse, type MetricType, type SetLimitRequest } from "./models";
+import type { AddServerRequest, AuthRequest, Component, DeleteLimitRequest, DeleteServerRequest, ErrorMessage, GetAllServersResponse, GetServerComponentsRequest, GetStatsByPeriodRequest, GetStatsByPeriodResponse, Limit, LimitNotification, LoginResponse, MetricType, SetLimitRequest } from "./models";
 
 // Service functions
 function getToken() {
@@ -142,6 +142,17 @@ export async function deleteLimit(reqBody: DeleteLimitRequest): Promise<null | s
     body: JSON.stringify(reqBody)
   });
   if (res.ok) return null;
+
+  const data = await res.json();
+  return data.error;
+}
+
+export async function getNotifications(): Promise<LimitNotification[] | string> {
+  const res = await fetch('api/user/notifications', {
+    method: 'GET',
+    headers: getHeaders()
+  });
+  if (res.ok) return res.json();
 
   const data = await res.json();
   return data.error;

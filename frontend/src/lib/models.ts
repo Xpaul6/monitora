@@ -28,6 +28,13 @@ export type Limit = {
   threshold_value: number
 }
 
+export type LimitNotification = {
+  ID: number,
+  limit_id: number,
+  real_value: number
+  timestamp: string
+}
+
 // API models
 export type ErrorMessage = {
   error: string

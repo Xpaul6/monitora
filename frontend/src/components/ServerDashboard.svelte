@@ -9,6 +9,7 @@
     deleteServer,
     getLimits,
     getMetricTypes,
+    getNotifications,
     getServerComponents,
     getStatsByPeriod,
     setLimit,
@@ -23,6 +24,7 @@
     DeleteServerRequest,
     Limit,
     SetLimitRequest,
+    LimitNotification,
   } from "../lib/models";
   import LimitForm from "./LimitForm.svelte";
 
@@ -44,10 +46,18 @@
     return ret;
   });
   let limits = $state<Limit[]>([]);
+  let limitMap = $derived.by<Map<number, Limit>>(() => {
+    let ret = new Map<number, Limit>();
+    for (let l of limits) {
+      ret.set(l.ID, l);
+    }
+    return ret;
+  });
   let displayLimitForm = $state<boolean>(false);
   let newLimitComponent = $state<Component>({} as Component);
   let newLimitMetric = $state<MetricType>({} as MetricType);
   let newLimitValue = $state<number>(0);
+  let notifications = $state<LimitNotification[]>([]);
   let periodBegin = $state<Date>(new Date());
   let periodEnd = $state<Date>(new Date());
   let stats = $state<GetStatsByPeriodResponse[]>([]);
@@ -176,6 +186,19 @@
     }
   }
 
+  async function handleGetNotifications() {
+    try {
+      const res = await getNotifications();
+      if (typeof res != "string") {
+        notifications = res;
+      } else {
+        alert("Unable to get limits: " + res);
+      }
+    } catch (e) {
+      alert("Network error: " + e);
+    }
+  }
+
   async function handleGetStatsByPeriod() {
     const body: GetStatsByPeriodRequest = {
       server_id: server.ID,
@@ -279,6 +302,7 @@
   onMount(handleGetServerComponents);
   onMount(handleGetMetricTypes);
   onMount(handleGetLimits);
+  onMount(handleGetNotifications);
 </script>
 
 <div class="flex flex-col items-center">
@@ -302,6 +326,12 @@
       <h2>Limits:</h2>
       {#each limits as l (l.ID)}
         {@render limit(l)}
+      {/each}
+    </div>
+    <div>
+      <h2>Notifications:</h2>
+      {#each notifications as n (n.ID)}
+        {@render notification(n)}
       {/each}
     </div>
   </div>
@@ -380,6 +410,20 @@
       {serverComponentMap.get(l.component_id)?.address}: {l.threshold_value}
       {metricTypeMap.get(l.metric_type_id)?.unit}
     </p>
-    <button class="px-2 mx-2 rounded-md hover:cursor-pointer hover:bg-red-500" onclick={() => handleDeleteLimit(l.ID)}>x</button>
+    <button
+      class="px-2 mx-2 rounded-md hover:cursor-pointer hover:bg-red-500"
+      onclick={() => handleDeleteLimit(l.ID)}>x</button
+    >
+  </div>
+{/snippet}
+
+{#snippet notification(n: LimitNotification)}
+  <div class="flex flex-row justify-between">
+    <p>
+      {new Date(n.timestamp).getDate}: {serverComponentMap.get(
+        limitMap.get(n.ID)?.component_id,
+      )?.address} - {n.real_value}
+      {metricTypeMap.get(limitMap.get(n.limit_id)?.metric_type_id)?.unit}
+    </p>
   </div>
 {/snippet}
