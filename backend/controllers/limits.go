@@ -11,6 +11,11 @@ import (
 
 func GetLimits(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var reqBody GetLimitsRequest
+		if err := c.Bind(&reqBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+			return
+		}
 		userVal, exists := c.Get("user")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Access denied"})
@@ -19,11 +24,11 @@ func GetLimits(db *gorm.DB) gin.HandlerFunc {
 		user := userVal.(User)
 
 		var limits []Limit
-		result := db.Where(
-			"component_id = (?)", db.Table("components").Where(
-				"server_id = (?)", db.Table("servers").Where("user_id = ?", user.ID),
-			),
-		).Find(&limits)
+		result := db.Table("limits").
+			Joins("JOIN components ON components.id = limits.component_id").
+			Joins("JOIN servers ON servers.id = components.server_id").
+			Where("servers.user_id = ? AND servers.id = ?", user.ID, reqBody.ID).
+			Find(&limits)
 
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
@@ -50,12 +55,12 @@ func SetLimit(db *gorm.DB) gin.HandlerFunc {
 		}
 		user := userVal.(User)
 		var component Component
-		if err := db.First(&component, reqBody.ComponentID); err != nil{
+		if err := db.First(&component, reqBody.ComponentID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
 			return
 		}
 		var server Server
-		if err := db.First(&server, component.ServerID); err != nil{
+		if err := db.First(&server, component.ServerID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
 			return
 		}
@@ -65,8 +70,8 @@ func SetLimit(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		newLimit := Limit{
-			ComponentID: reqBody.ComponentID,
-			MetricTypeID: reqBody.MetricTypeID,
+			ComponentID:    reqBody.ComponentID,
+			MetricTypeID:   reqBody.MetricTypeID,
 			ThresholdValue: reqBody.ThresholdValue,
 		}
 
@@ -96,17 +101,17 @@ func DeleteLimit(db *gorm.DB) gin.HandlerFunc {
 		}
 		user := userVal.(User)
 		var limit Limit
-		if err := db.First(&limit, reqBody.ID); err != nil{
+		if err := db.First(&limit, reqBody.ID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
 			return
 		}
 		var component Component
-		if err := db.First(&component, limit.ComponentID); err != nil{
+		if err := db.First(&component, limit.ComponentID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
 			return
 		}
 		var server Server
-		if err := db.First(&server, component.ServerID); err != nil{
+		if err := db.First(&server, component.ServerID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
 			return
 		}

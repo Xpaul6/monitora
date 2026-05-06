@@ -52,3 +52,11 @@ type DeleteLimitRequest struct {
 type GetServerComponentsRequest struct {
 	ID uint `json:"id"`
 }
+
+type GetLimitsRequest struct {
+	ID uint `json:"id"`
+}
+
+type GetNotificationsRequest struct {
+	ID uint `json:"id"`
+}
