@@ -52,22 +52,22 @@ func main() {
 	{
 		// Servers
 		user.GET("/servers", authutils.WithAuth(db), controllers.GetAllServers(db))
-		user.GET("/components", authutils.WithAuth(db), controllers.GetServerComponents(db))
+		user.POST("/components", authutils.WithAuth(db), controllers.GetServerComponents(db))
 		user.POST("/add-server", authutils.WithAuth(db), controllers.AddServer(db))
 		user.DELETE("/delete-server", authutils.WithAuth(db), controllers.DeleteServer(db))
 
 		// Limits
-		user.GET("/limits", authutils.WithAuth(db), controllers.GetLimits(db))
+		user.POST("/limits", authutils.WithAuth(db), controllers.GetLimits(db))
 		user.POST("/set-limit", authutils.WithAuth(db), controllers.SetLimit(db))
 		user.DELETE("/delete-limit", authutils.WithAuth(db), controllers.DeleteLimit(db))
 
 		// Common getters
-		user.GET("/notifications", authutils.WithAuth(db), controllers.GetNotifications(db))
+		user.POST("/notifications", authutils.WithAuth(db), controllers.GetNotifications(db))
 	}
 
 	stats := router.Group("/stats")
 	{
-		stats.GET("/by-period", authutils.WithAuth(db), controllers.GetStatsByPeriod(db))
+		stats.POST("/by-period", authutils.WithAuth(db), controllers.GetStatsByPeriod(db))
 	}
 
 	service := router.Group("/service")
