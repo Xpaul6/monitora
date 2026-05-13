@@ -425,7 +425,7 @@
   <div class="flex flex-row justify-between">
     <p>
       {new Date(n.timestamp).getDate}: {serverComponentMap.get(
-        limitMap.get(n.ID)?.component_id,
+        limitMap.get(n.limit_id)?.component_id,
       )?.address} - {n.real_value}
       {metricTypeMap.get(limitMap.get(n.limit_id)?.metric_type_id)?.unit}
     </p>
