@@ -54,8 +54,10 @@ func DetectLimitCross(logPair IdInfoPair, metricTypeMap map[uint]MetricType, db 
 			})
 		}
 	}
-	if err := db.Create(&notifications).Error; err != nil {
-		log.Printf("Error creating notifications: %v", err)
+	if len(notifications) > 0 {
+		if err := db.Create(&notifications).Error; err != nil {
+			log.Printf("Error creating notifications: %v", err)
+		}
 	}
 }
 

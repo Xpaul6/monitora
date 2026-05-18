@@ -190,7 +190,7 @@
   }
 
   async function handleGetNotifications() {
-    const body: GetNotificationsRequest = { id: server.iD };
+    const body: GetNotificationsRequest = { id: server.ID };
     try {
       const res = await getNotifications(body);
       if (typeof res != "string") {
@@ -313,26 +313,26 @@
   <h1>Dashboard</h1>
   <!-- Server info -->
   <div class="flex flex-row gap-5 justify-around">
-    <div>
+    <div class="h-60">
       <h2>Server:</h2>
       <p>ID: {server.ID}</p>
       <p>Name: {server.name}</p>
       <p>IP: {server.ip}</p>
       <p>Status: {server.status}</p>
     </div>
-    <div>
+    <div class="h-60">
       <h2>Components:</h2>
       {#each serverComponents as c (c.ID)}
         {@render component(c)}
       {/each}
     </div>
-    <div>
+    <div class="h-60">
       <h2>Limits:</h2>
       {#each limits as l (l.ID)}
         {@render limit(l)}
       {/each}
     </div>
-    <div>
+    <div class="overflow-y-scroll h-60">
       <h2>Notifications:</h2>
       {#each notifications as n (n.ID)}
         {@render notification(n)}
@@ -422,12 +422,17 @@
 {/snippet}
 
 {#snippet notification(n: LimitNotification)}
+  {@const limit = limitMap.get(n.limit_id)}
+  {@const ts = new Date(n.timestamp)}
+  {@const ts_f = `${ts.getHours()}:${ts.getMinutes()}(${ts.getDate()}-${ts.getMonth() > 9 ? ts.getMonth() + 1 : `0${ts.getMonth()}`})`}
   <div class="flex flex-row justify-between">
     <p>
-      {new Date(n.timestamp).getDate}: {serverComponentMap.get(
-        limitMap.get(n.limit_id)?.component_id,
-      )?.address} - {n.real_value}
-      {metricTypeMap.get(limitMap.get(n.limit_id)?.metric_type_id)?.unit}
+      {#if limit && serverComponentMap.has(limit.component_id) && metricTypeMap.has(limit.metric_type_id)}
+        {serverComponentMap.get(limit.component_id)?.address} - {n.real_value.toFixed(2)}
+        {metricTypeMap.get(limit.metric_type_id)?.unit} - {ts_f}
+      {:else}
+        Unknown limit
+      {/if}
     </p>
   </div>
 {/snippet}
