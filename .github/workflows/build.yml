@@ -44,7 +44,7 @@ jobs:
   build_docker_compose:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/chekout@v4
+    - uses: actions/checkout@v4
 
     - name: Setup Docker Compose
       uses: docker/setup-compose-action@v2
