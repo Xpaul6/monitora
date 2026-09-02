@@ -29,6 +29,8 @@ jobs:
         node-version: '24.x'
         cache: 'npm'
 
-    - name: Build frontend
+    - name: Install frontend dependencies
       run: npm ci
+
+    - name: Build frontend
       run: npm run build
