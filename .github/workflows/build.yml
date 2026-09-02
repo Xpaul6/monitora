@@ -40,3 +40,16 @@ jobs:
     - name: Build frontend
       working-directory: ./frontend
       run: npm run build
+
+  build_docker_compose:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/chekout@v4
+
+    - name: Setup Docker Compose
+      uses: actions/setup-compose-actions@v2
+      with:
+        version: latest
+
+    - name: Build Docker Compose
+      run: docker compose build
