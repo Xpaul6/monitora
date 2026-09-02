@@ -6,6 +6,8 @@ COPY go.mod ./
 
 RUN go mod download
 
+COPY go.sum ./
+
 COPY *.go ./
 COPY controllers/ ./controllers/
 COPY models/ ./models/
