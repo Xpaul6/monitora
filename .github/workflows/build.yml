@@ -2,7 +2,7 @@ name: Build check
 
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'automation']
 
 jobs:
   build_backend:
@@ -40,3 +40,16 @@ jobs:
     - name: Build frontend
       working-directory: ./frontend
       run: npm run build
+
+  build_docker_compose:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Docker Compose
+      uses: docker/setup-compose-action@v2
+      with:
+        version: latest
+
+    - name: Build Docker Compose
+      run: docker compose build
