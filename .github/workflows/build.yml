@@ -2,7 +2,7 @@ name: Build check
 
 on:
   push:
-    branches: ['automation']
+    branches: ['main']
 
 jobs:
   build_backend:
