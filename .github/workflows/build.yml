@@ -47,7 +47,7 @@ jobs:
     - uses: actions/chekout@v4
 
     - name: Setup Docker Compose
-      uses: actions/setup-compose-action@v2
+      uses: docker/setup-compose-action@v2
       with:
         version: latest
 
