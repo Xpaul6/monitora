@@ -41,7 +41,7 @@
   onsubmit={(e) => e.preventDefault()}
   class="flex flex-col border border-s rounded-md m-5 p-5 gap-1"
 >
-  <label for="email">Email</label>
+  <label for="email">Login</label>
   <input type="text" id="email" class="form-input" bind:value={email} />
   <label for="password">Password</label>
   <input
